@@ -1,6 +1,6 @@
 --[[
-    Milenium Library (Versão Compacta)
-    -> Adicionado botão toggle
+    Tenis o'toole
+    -> Botão toggle funcionando corretamente
     -> Tamanho reduzido
 ]]
 
@@ -77,6 +77,7 @@ getgenv().library = {
     notifications = {notifs = {}},
     current_open; 
     menu_visible = true;
+    is_hidden = false;
 }
 
 local themes = {
@@ -498,7 +499,7 @@ end
                 suffix = properties.suffix or properties.Suffix or "tech";
                 name = properties.name or properties.Name or "nebula";
                 game_name = properties.gameInfo or properties.game_info or properties.GameInfo or "Milenium";
-                size = properties.size or properties.Size or dim2(0, 600, 0, 450); -- Tamanho reduzido
+                size = properties.size or properties.Size or dim2(0, 600, 0, 450);
                 selected_tab;
                 items = {};
 
@@ -543,7 +544,7 @@ end
                     ApplyStrokeMode = Enum.ApplyStrokeMode.Border
                 });
                 
-                -- Botão toggle (esconder/mostrar)
+                -- Botão toggle melhorado
                 items[ "toggle_btn" ] = library:create( "TextButton" , {
                     Parent = items[ "main" ];
                     Size = dim2(0, 30, 0, 30);
@@ -555,6 +556,7 @@ end
                     FontFace = fonts.font;
                     BorderSizePixel = 0;
                     AutoButtonColor = false;
+                    ZIndex = 999;
                 });
                 
                 library:create( "UICorner" , {
@@ -562,23 +564,68 @@ end
                     CornerRadius = dim(0, 7)
                 });
                 
-                items[ "toggle_btn" ].MouseButton1Click:Connect(function()
-                    library.menu_visible = not library.menu_visible
-                    library:tween(items[ "main" ], {BackgroundTransparency = library.menu_visible and 0 or 1, Size = library.menu_visible and cfg.size or dim2(0, 50, 0, 50)}, Enum.EasingStyle.Quad, 0.3)
+                -- Botão toggle que fica visível quando a UI tá escondida
+                items[ "toggle_btn_mini" ] = library:create( "TextButton" , {
+                    Parent = library[ "items" ];
+                    Size = dim2(0, 40, 0, 40);
+                    Position = dim2(1, -50, 0, 10);
+                    BackgroundColor3 = rgb(25, 25, 29);
+                    Text = "☰";
+                    TextColor3 = rgb(255, 255, 255);
+                    TextSize = 22;
+                    FontFace = fonts.font;
+                    BorderSizePixel = 0;
+                    AutoButtonColor = false;
+                    Visible = false;
+                    ZIndex = 999;
+                });
+                
+                library:create( "UICorner" , {
+                    Parent = items[ "toggle_btn_mini" ];
+                    CornerRadius = dim(0, 10)
+                });
+                
+                library:create( "UIStroke" , {
+                    Color = rgb(23, 23, 29);
+                    Parent = items[ "toggle_btn_mini" ];
+                    ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+                });
+                
+                local function toggle_menu()
+                    library.is_hidden = not library.is_hidden
                     
-                    for _, child in items[ "main" ]:GetChildren() do
-                        if child ~= items[ "toggle_btn" ] then
-                            library:tween(child, {Visible = library.menu_visible}, Enum.EasingStyle.Quad, 0.2)
+                    if library.is_hidden then
+                        library:tween(items[ "main" ], {BackgroundTransparency = 1, Size = dim2(0, 50, 0, 50)}, Enum.EasingStyle.Quad, 0.3)
+                        items[ "toggle_btn_mini" ].Visible = true
+                        items[ "toggle_btn_mini" ].Position = dim2(0, items[ "main" ].AbsolutePosition.X + 5, 0, items[ "main" ].AbsolutePosition.Y + 5)
+                        library:tween(items[ "toggle_btn_mini" ], {Size = dim2(0, 40, 0, 40)}, Enum.EasingStyle.Quad, 0.2)
+                        
+                        -- Esconde todos os filhos exceto o botão
+                        for _, child in items[ "main" ]:GetChildren() do
+                            if child ~= items[ "toggle_btn" ] then
+                                child.Visible = false
+                            end
+                        end
+                        items[ "toggle_btn" ].Visible = true
+                    else
+                        items[ "toggle_btn_mini" ].Visible = false
+                        library:tween(items[ "main" ], {BackgroundTransparency = 0, Size = cfg.size}, Enum.EasingStyle.Quad, 0.3)
+                        
+                        for _, child in items[ "main" ]:GetChildren() do
+                            child.Visible = true
                         end
                     end
-                end)
+                end
+                
+                items[ "toggle_btn" ].MouseButton1Click:Connect(toggle_menu)
+                items[ "toggle_btn_mini" ].MouseButton1Click:Connect(toggle_menu)
 
                 items[ "side_frame" ] = library:create( "Frame" , {
                     Parent = items[ "main" ];
                     BackgroundTransparency = 1;
                     Name = "\0";
                     BorderColor3 = rgb(0, 0, 0);
-                    Size = dim2(0, 170, 1, -25); -- Mais compacto
+                    Size = dim2(0, 170, 1, -25);
                     BorderSizePixel = 0;
                     BackgroundColor3 = rgb(14, 14, 16)
                 });
